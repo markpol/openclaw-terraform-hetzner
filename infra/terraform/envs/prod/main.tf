@@ -13,7 +13,16 @@ terraform {
     }
   }
 
-  # Remote state backend (optional) - credentials via AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY env vars
+  # Remote state backend via AWS S3 bucket (optional) 
+  # - credentials via AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY env vars
+  # - region via AWS_REGION env var
+  # Create bucket and IAM credentials ahead of time
+  backend "s3" {
+    bucket         = "openclaw-terraform-hetzner-state"
+    key            = "prod/terraform.tfstate"
+    encrypt        = true
+  }
+
   #
   # Uncomment to use Hetzner Object Storage for remote state:
   # 1. Create a bucket at https://console.hetzner.cloud/ -> Object Storage

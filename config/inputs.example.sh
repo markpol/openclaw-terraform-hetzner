@@ -24,14 +24,15 @@ export TF_VAR_hcloud_token="$HCLOUD_TOKEN"
 # ============================================
 # For Terraform remote state storage
 # Create bucket at: https://console.hetzner.cloud/ -> Object Storage
-export S3_ENDPOINT="https://nbg1.your-objectstorage.com"
-export S3_ACCESS_KEY="CHANGE_ME_your-s3-access-key"
-export S3_SECRET_KEY="CHANGE_ME_your-s3-secret-key"
-export S3_BUCKET="openclaw-tfstate"
+# export S3_ENDPOINT="https://nbg1.your-objectstorage.com"
+# export S3_ACCESS_KEY="CHANGE_ME_your-s3-access-key"
+# export S3_SECRET_KEY="CHANGE_ME_your-s3-secret-key"
+# export S3_BUCKET="openclaw-tfstate"
 
 # Terraform S3 backend uses AWS_ env vars
-export AWS_ACCESS_KEY_ID="$S3_ACCESS_KEY"
-export AWS_SECRET_ACCESS_KEY="$S3_SECRET_KEY"
+export AWS_ACCESS_KEY_ID="CHANGE_ME_your-s3-access-key"
+export AWS_SECRET_ACCESS_KEY="CHANGE_ME_your-s3-secret-key"
+export AWS_REGION="CHANGE_ME_your-s3-region"
 
 # ============================================
 # REQUIRED: SSH Configuration
@@ -41,6 +42,8 @@ export AWS_SECRET_ACCESS_KEY="$S3_SECRET_KEY"
 # After confirming Tailscale SSH works, set this to '[]' and set SERVER_IP="openclaw-prod"
 # below, then re-run: make apply
 export TF_VAR_ssh_allowed_cidrs='["0.0.0.0/0", "::/0"]'
+# export TF_VAR_ssh_allowed_cidrs='["YOUR_IP/32"]'
+# export TF_VAR_ssh_allowed_cidrs='[]'
 
 # Fingerprint of your existing Hetzner SSH key (avoids recreating shared keys)
 # List yours: curl -s -H "Authorization: Bearer $HCLOUD_TOKEN" https://api.hetzner.cloud/v1/ssh_keys | jq '.ssh_keys[] | {name, fingerprint}'
@@ -65,9 +68,9 @@ export CONFIG_DIR="/path/to/your/openclaw-config"
 # REQUIRED: GitHub Container Registry
 # ============================================
 # For pulling private Docker images during bootstrap and deploy
-# Create a PAT at: https://github.com/settings/tokens with read:packages scope
-export GHCR_USERNAME="your-github-username"
-export GHCR_TOKEN="CHANGE_ME_your-github-pat-with-read-packages-scope"
+# Create a PAT at: https://github.com/settings/tokens with read/write:packages scope
+export GHCR_USERNAME="CHANGE_ME_your-github-username"
+export GHCR_TOKEN="CHANGE_ME_your-github-pat-with-read-write-packages-scope"
 
 # ============================================
 # OPTIONAL: Claude Setup Token (for Claude Max/Pro subscription)
@@ -90,16 +93,16 @@ export TF_VAR_enable_tailscale=false
 # Tailscale auth key (generate at https://login.tailscale.com/admin/settings/keys)
 # Leave empty to authenticate manually after deployment with: make tailscale-up
 # Recommended: reusable + pre-authorized key (not ephemeral)
-export TF_VAR_tailscale_auth_key=""
+export TF_VAR_tailscale_auth_key="CHANGE_ME_your-tailscale-auth-key"
 
 # ============================================
 # Server Configuration (Optional Overrides)
 # ============================================
-# export TF_VAR_server_type="cx23"
-# export TF_VAR_server_location="nbg1"
+export TF_VAR_server_type="cx33"
+export TF_VAR_server_location="nbg1"
 
 # Enable/disable public IPv4 on the Hetzner server.
 # Set to false for ipv6-only access.
 # Note: IPv6-only is not plug-and-play for image pulls because ghcr.io does not
 # provide IPv6 out of the box. Use a NAT64-capable DNS service when disabling IPv4.
-# export TF_VAR_server_enable_ipv4=true
+export TF_VAR_server_enable_ipv4=true

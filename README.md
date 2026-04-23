@@ -22,16 +22,16 @@ For information about OpenClaw itself, see the [OpenClaw documentation](https://
 
 1. **Terraform** >= 1.5 ([Installation Guide](https://developer.hashicorp.com/terraform/install))
 2. **Hetzner Cloud Account** with API token ([Console](https://console.hetzner.cloud/))
-3. **Hetzner Object Storage** for Terraform state (optional but recommended)
+3. **Hetzner Object Storage or AWS S3** for Terraform state (optional but recommended)
 4. **SSH Key** at `~/.ssh/id_rsa.pub`
-5. **Docker configuration repo**: [openclaw-docker-config](https://github.com/andreesg/openclaw-docker-config)
+5. **Docker configuration repo**: [openclaw-docker-config](https://github.com/markpol/openclaw-docker-config)
 
 ## Quick Start
 
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/andreesg/openclaw-terraform-hetzner.git
+git clone https://github.com/markpol/openclaw-terraform-hetzner.git
 cd openclaw-terraform-hetzner
 ```
 
@@ -114,8 +114,8 @@ make tailscale-ip      # note your Tailscale IP (e.g. 100.x.x.x)
 |-----------|---------|----------|
 | **infra/terraform/** | Infrastructure definitions | This repo |
 | **deploy/** | Deployment automation | This repo |
-| **docker/** | Container configuration | [openclaw-docker-config](https://github.com/andreesg/openclaw-docker-config) |
-| **config/** | OpenClaw configuration | [openclaw-docker-config](https://github.com/andreesg/openclaw-docker-config) |
+| **docker/** | Container configuration | [openclaw-docker-config](https://github.com/markpol/openclaw-docker-config) |
+| **config/** | OpenClaw configuration | [openclaw-docker-config](https://github.com/markpol/openclaw-docker-config) |
 
 ## Usage
 
@@ -167,11 +167,11 @@ make workspace-push SOURCE=./my-agent DEST=agents/main/agent
 
 ### Server Sizing
 
-Default: CX23 (2 vCPU, 4GB RAM)
+Default: CX33 (4 vCPU, 8GB RAM)
 
 To change server type, add to `config/inputs.sh`:
 ```bash
-export TF_VAR_server_type="cx32"  # 4 vCPU, 8GB RAM
+export TF_VAR_server_type="cx43"  # 8 vCPU, 16GB RAM
 ```
 
 See [Hetzner server types](https://www.hetzner.com/cloud#pricing).
@@ -274,6 +274,7 @@ OpenClaw supports multiple AI providers. This setup defaults to the Vercel API G
 - Anthropic Claude (Opus, Sonnet, Haiku)
 - OpenAI (GPT-4, GPT-3.5, o1)
 - DeepSeek (V3, R1)
+- Vercel AI Gateway (100s of models from 20+ providers)
 - Local models (via Ollama or LM Studio)
 
 **To switch providers:**
