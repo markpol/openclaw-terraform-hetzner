@@ -158,6 +158,8 @@ make tailscale-up       # Manually authenticate Tailscale
 make push-env    # Push environment variables
 make push-config # Push OpenClaw configuration
 make setup-auth  # Configure Claude subscription auth
+make workspace-push SOURCE=./tmp/prompt.txt
+make workspace-push SOURCE=./my-agent DEST=agents/main/agent
 ```
 
 ## Configuration
@@ -265,7 +267,7 @@ The S3 backend configuration is commented out by default in `infra/terraform/env
 
 ### Switching AI Providers
 
-OpenClaw supports multiple AI providers. This setup defaults to Anthropic Claude, but you can switch to other providers by modifying the configuration in [openclaw-docker-config](https://github.com/andreesg/openclaw-docker-config).
+OpenClaw supports multiple AI providers. This setup defaults to the Vercel API Gateway, but you can switch to other providers by modifying the configuration in [openclaw-docker-config](https://github.com/markpol/openclaw-docker-config).
 
 **Supported providers:**
 - Anthropic Claude (Opus, Sonnet, Haiku)

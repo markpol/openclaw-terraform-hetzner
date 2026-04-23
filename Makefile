@@ -7,7 +7,7 @@ SHELL := /bin/bash
 .PHONY: init plan apply destroy ssh ssh-root tunnel output ip fmt validate clean help \
         bootstrap deploy push-env push-config setup-auth backup-now restore logs status \
         tailscale-status tailscale-ip tailscale-up tailscale-serve \
-        workspace-sync
+        workspace-sync workspace-push
 
 # Default target
 .DEFAULT_GOAL := help
@@ -142,6 +142,18 @@ workspace-sync: ## Sync all agent workspaces to GitHub now
 	ssh -o StrictHostKeyChecking=accept-new openclaw@$(SERVER_IP) \
 		'cd ~/openclaw && for svc in $$(docker compose ps --format "{{.Name}}" 2>/dev/null | grep workspace-sync); do echo "Syncing $$svc..."; docker exec $$svc workspace-sync.sh; done'
 
+workspace-push: ## Push one file or directory to ~/.openclaw/workspace (use SOURCE=path [DEST=path])
+ifndef SOURCE
+	@echo -e "$(RED)[ERROR]$(NC) SOURCE variable required"
+	@echo "Usage: make workspace-push SOURCE=path/to/file-or-dir [DEST=relative/path] [ENV=prod]"
+	@exit 1
+endif
+	@echo -e "$(BLUE)[DEPLOY]$(NC) Pushing $(SOURCE) to workspace on $(SERVER_IP)..."
+	@./scripts/push-workspace.sh \
+		--source "$(SOURCE)" \
+		--dest "$(DEST)" \
+		--host "$(SERVER_IP)"
+
 # =============================================================================
 # Tailscale Commands
 # =============================================================================
@@ -194,6 +206,7 @@ help: ## Show this help message
 	@echo -e "  $(GREEN)backup-now$(NC)      Run backup now"
 	@echo -e "  $(GREEN)restore$(NC)         Restore from backup (BACKUP=filename)"
 	@echo -e "  $(GREEN)workspace-sync$(NC)  Sync workspace to GitHub now"
+	@echo -e "  $(GREEN)workspace-push$(NC)  Push SOURCE into ~/.openclaw/workspace"
 	@echo -e "  $(GREEN)output$(NC)          Show Terraform outputs"
 	@echo -e "  $(GREEN)ip$(NC)              Show server IP"
 	@echo ""

@@ -22,11 +22,13 @@ SSH_OPTS="-o StrictHostKeyChecking=accept-new"
 TERRAFORM_DIR="infra/terraform/envs/prod"
 ENV_FILE="secrets/openclaw.env"
 REMOTE_PATH="/home/openclaw/openclaw/.env"
+AI_PROVIDER_API_KEY_VAR="AI_GATEWAY_API_KEY"
 
 # Required variables that must be non-empty
 REQUIRED_VARS=(
     TELEGRAM_BOT_TOKEN
     OPENCLAW_GATEWAY_TOKEN
+    $AI_PROVIDER_API_KEY_VAR
 )
 
 # -----------------------------------------------------------------------------
@@ -97,9 +99,9 @@ fi
 echo "[OK] All required variables are set"
 
 # Warn if no API key (setup-token may be used instead)
-api_key_value=$(grep -E "^ANTHROPIC_API_KEY=" "$ENV_FILE" | head -1 | cut -d= -f2-)
+api_key_value=$(grep -E "^${AI_PROVIDER_API_KEY_VAR}=" "$ENV_FILE" | head -1 | cut -d= -f2-)
 if [[ -z "$api_key_value" ]]; then
-    echo "[WARN] ANTHROPIC_API_KEY is empty. Make sure you've run 'make setup-auth' for subscription auth."
+    echo "[WARN] ${AI_PROVIDER_API_KEY_VAR} is empty. Make sure you've run 'make setup-auth' for subscription auth."
 fi
 
 # -----------------------------------------------------------------------------
