@@ -5,7 +5,7 @@
 
 SHELL := /bin/bash
 .PHONY: init plan apply destroy ssh ssh-root tunnel output ip fmt validate clean help \
-        bootstrap deploy push-env push-config setup-auth backup-now restore logs status \
+	bootstrap deploy push-env push-config setup-auth backup-now sync-backups restore logs status \
         tailscale-status tailscale-ip tailscale-up tailscale-serve \
         workspace-sync workspace-push
 
@@ -118,6 +118,13 @@ backup-now: ## Run backup now on the VPS
 	ssh -o StrictHostKeyChecking=accept-new openclaw@$(SERVER_IP) \
 		'bash -s' < ./deploy/backup.sh
 
+sync-backups: ## Sync VPS backups into local .backup/
+	@echo -e "$(GREEN)[INFO]$(NC) Syncing backups from $(SERVER_IP):~/backups/ to ./.backup/..."
+	@mkdir -p ./.backup
+	@rsync -av --delete \
+		-e "ssh -o StrictHostKeyChecking=accept-new" \
+		openclaw@$(SERVER_IP):~/backups/ ./.backup/
+
 restore: ## Restore from backup (use BACKUP=filename)
 ifndef BACKUP
 	@echo -e "$(RED)[ERROR]$(NC) BACKUP variable required"
@@ -204,6 +211,7 @@ help: ## Show this help message
 	@echo -e "  $(GREEN)status$(NC)          Check VPS status"
 	@echo -e "  $(GREEN)logs$(NC)            Stream Docker logs"
 	@echo -e "  $(GREEN)backup-now$(NC)      Run backup now"
+	@echo -e "  $(GREEN)sync-backups$(NC)    Sync VPS backups into local .backup/"
 	@echo -e "  $(GREEN)restore$(NC)         Restore from backup (BACKUP=filename)"
 	@echo -e "  $(GREEN)workspace-sync$(NC)  Sync workspace to GitHub now"
 	@echo -e "  $(GREEN)workspace-push$(NC)  Push SOURCE into ~/.openclaw/workspace"

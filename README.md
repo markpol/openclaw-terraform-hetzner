@@ -143,6 +143,7 @@ make logs       # Stream container logs
 make ssh        # SSH to VPS as openclaw user
 make tunnel     # Create SSH tunnel to gateway
 make backup-now # Trigger backup immediately
+make sync-backups # Mirror ~/backups/ from the VPS into ./.backup/
 make restore    # Restore from backup (BACKUP=filename)
 ```
 
@@ -361,13 +362,21 @@ Backups run daily at 02:00 UTC via systemd timer.
 # Manual backup
 make backup-now
 
+# Sync remote backups into the local .backup/ directory
+make sync-backups
+
 # List backups
 make ssh
 ls -lh ~/backups/
 
+# List synced local backups
+ls -lh .backup/
+
 # Restore from backup
 make restore BACKUP=openclaw-backup-2026-02-08.tar.gz
 ```
+
+`make sync-backups` uses `rsync` to mirror `~/backups/` from the server into the repository's local `.backup/` directory.
 
 ### Accessing the Gateway
 
