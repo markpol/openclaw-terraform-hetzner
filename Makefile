@@ -105,12 +105,24 @@ push-env: ## Push secrets/openclaw.env to the VPS
 	@echo -e "$(BLUE)[DEPLOY]$(NC) Pushing secrets to VPS..."
 	@./scripts/push-env.sh $(SERVER_IP)
 
-push-config: ## Push config files from CONFIG_DIR to the VPS
+push-config: ## Push config files from OPENCLAW_CONFIG_DIR and REGULATOR_CONFIG_DIR to the VPS
 	@echo -e "$(BLUE)[DEPLOY]$(NC) Pushing config to VPS..."
 	@./scripts/push-config.sh $(SERVER_IP)
 
-setup-auth: ## Set up Claude subscription auth on the VPS
-	@echo -e "$(BLUE)[AUTH]$(NC) Setting up Claude subscription auth..."
+push-workspace: ## Push one file or directory to ~/.openclaw/workspace (use SOURCE=path [DEST=path])
+ifndef SOURCE
+	@echo -e "$(RED)[ERROR]$(NC) SOURCE variable required"
+	@echo "Usage: make workspace-push SOURCE=path/to/file-or-dir [DEST=relative/path] [ENV=prod]"
+	@exit 1
+endif
+	@echo -e "$(BLUE)[DEPLOY]$(NC) Pushing $(SOURCE) to workspace on $(SERVER_IP)..."
+	@./scripts/push-workspace.sh \
+		--source "$(SOURCE)" \
+		--dest "$(DEST)" \
+		--host "$(SERVER_IP)"	
+
+setup-auth: ## Authenticate GitHub CLI inside the OpenClaw container
+	@echo -e "$(BLUE)[AUTH]$(NC) Setting Github auth..."
 	@./scripts/setup-auth.sh $(SERVER_IP)
 
 backup-now: ## Run backup now on the VPS
@@ -202,7 +214,7 @@ help: ## Show this help message
 	@echo -e "  $(BLUE)deploy$(NC)          Pull latest image and restart container"
 	@echo -e "  $(BLUE)push-env$(NC)        Push secrets/openclaw.env to the VPS"
 	@echo -e "  $(BLUE)push-config$(NC)     Push config files to the VPS"
-	@echo -e "  $(BLUE)setup-auth$(NC)      Set up Claude subscription auth"
+	@echo -e "  $(BLUE)setup-auth$(NC)      Authenticate GitHub CLI inside the container"
 	@echo ""
 	@echo -e "$(BOLD)Operations:$(NC)"
 	@echo -e "  $(GREEN)ssh$(NC)             SSH as openclaw user"

@@ -22,27 +22,36 @@ SSH_OPTS="-o StrictHostKeyChecking=accept-new"
 TERRAFORM_DIR="infra/terraform/envs/prod"
 
 # Local path to the openclaw-config repository
-CONFIG_DIR="${CONFIG_DIR:-}"
+OPENCLAW_CONFIG_DIR="${OPENCLAW_CONFIG_DIR:-}"
+REGULATOR_CONFIG_DIR="${REGULATOR_CONFIG_DIR:-}"
 
 # Remote config directory
-REMOTE_CONFIG_DIR="/home/openclaw/.openclaw"
+REMOTE_OPENCLAW_CONFIG_DIR="/home/openclaw/.openclaw"
+REMOTE_REGULATOR_CONFIG_DIR="/home/openclaw/.regulator"
 
 # -----------------------------------------------------------------------------
-# Validate CONFIG_DIR
+# Validate OPENCLAW_CONFIG_DIR
 # -----------------------------------------------------------------------------
 
-if [[ -z "$CONFIG_DIR" ]]; then
-    echo "Error: CONFIG_DIR not set"
+if [[ -z "$OPENCLAW_CONFIG_DIR" ]]; then
+    echo "Error: OPENCLAW_CONFIG_DIR not set"
     echo ""
     echo "Set it in config/inputs.sh or export it:"
-    echo "  export CONFIG_DIR=/path/to/your/openclaw-config"
+    echo "  export OPENCLAW_CONFIG_DIR=/path/to/your/openclaw-config"
     exit 1
 fi
 
-if [[ ! -d "$CONFIG_DIR/config" ]]; then
-    echo "Error: $CONFIG_DIR/config directory not found"
+if [[ ! -d "$OPENCLAW_CONFIG_DIR/config" ]]; then
+    echo "Error: $OPENCLAW_CONFIG_DIR/config directory not found"
     echo ""
-    echo "Make sure CONFIG_DIR points to your openclaw-config repository"
+    echo "Make sure OPENCLAW_CONFIG_DIR points to your openclaw-config repository"
+    exit 1
+fi
+
+if [[ ! -d "$REGULATOR_CONFIG_DIR" ]]; then
+    echo "Error: $REGULATOR_CONFIG_DIR file not found"
+    echo ""
+    echo "Make sure REGULATOR_CONFIG_DIR points to your regulator-config repository data directory"
     exit 1
 fi
 
@@ -68,7 +77,7 @@ fi
 
 echo "=== OpenClaw Push Config ==="
 echo "VPS IP: $VPS_IP"
-echo "Config Dir: $CONFIG_DIR"
+echo "OpenClaw Config Dir: $OPENCLAW_CONFIG_DIR"
 echo ""
 
 # -----------------------------------------------------------------------------
@@ -77,13 +86,13 @@ echo ""
 
 echo "[...] Pushing config files to VPS..."
 
-ssh $SSH_OPTS "$VPS_USER@$VPS_IP" "mkdir -p $REMOTE_CONFIG_DIR && chmod 700 $REMOTE_CONFIG_DIR"
+ssh $SSH_OPTS "$VPS_USER@$VPS_IP" "mkdir -p $REMOTE_OPENCLAW_CONFIG_DIR && chmod 700 $REMOTE_OPENCLAW_CONFIG_DIR"
 
 FILE_COUNT=0
-for file in "$CONFIG_DIR"/config/*; do
+for file in "$OPENCLAW_CONFIG_DIR"/config/*; do
     if [[ -f "$file" ]]; then
         filename=$(basename "$file")
-        scp $SSH_OPTS "$file" "$VPS_USER@$VPS_IP:$REMOTE_CONFIG_DIR/$filename"
+        scp $SSH_OPTS "$file" "$VPS_USER@$VPS_IP:$REMOTE_OPENCLAW_CONFIG_DIR/$filename"
         echo "[OK] Pushed $filename"
         FILE_COUNT=$((FILE_COUNT + 1))
     fi
@@ -94,8 +103,22 @@ if [[ $FILE_COUNT -eq 0 ]]; then
     exit 0
 fi
 
+FILE_COUNT=0
+for file in "$REGULATOR_CONFIG_DIR"/*; do
+    if [[ -f "$file" ]]; then
+        filename=$(basename "$file")
+        scp $SSH_OPTS "$file" "$VPS_USER@$VPS_IP:$REMOTE_REGULATOR_CONFIG_DIR/$filename"
+        FILE_COUNT=$((FILE_COUNT + 1))
+    fi
+done
+
+if [[ $FILE_COUNT -eq 0 ]]; then
+    echo "[SKIP] No regulator config files found in $REGULATOR_CONFIG_DIR/"
+    exit 0
+fi
+
 # Set secure permissions on config files only (not subdirectories)
-ssh $SSH_OPTS "$VPS_USER@$VPS_IP" "find $REMOTE_CONFIG_DIR -maxdepth 1 -type f -exec chmod 600 {} +"
+ssh $SSH_OPTS "$VPS_USER@$VPS_IP" "find $REMOTE_OPENCLAW_CONFIG_DIR -maxdepth 1 -type f -exec chmod 600 {} +"
 
 echo ""
 echo "[OK] Pushed $FILE_COUNT config file(s)"

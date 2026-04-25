@@ -45,7 +45,8 @@ vim config/inputs.sh  # Add your Hetzner API token and configuration
 Required variables in `config/inputs.sh`:
 - `HCLOUD_TOKEN` - Hetzner Cloud API token
 - `TF_VAR_ssh_key_fingerprint` - SSH key fingerprint from Hetzner
-- `CONFIG_DIR` - Path to your openclaw-docker-config repository
+- `OPENCLAW_CONFIG_DIR` - Path to your openclaw-docker-config repository
+- `REGULATOR_CONFIG_DIR` - Path to your regulator repo config directory
 - `SERVER_IP` - Address that scripts use to SSH into the VPS. Set to `openclaw-prod` when using Tailscale (MagicDNS hostname, stable across rebuilds). Leave unset to auto-detect from Terraform output (only works when public SSH is open).
 
 > **Tailscale (optional, recommended):** Set `TF_VAR_enable_tailscale=true` and `TF_VAR_tailscale_auth_key` to install Tailscale automatically on first boot — it lets you remove SSH from the public internet entirely. See [Firewall Rules](#firewall-rules).
@@ -158,10 +159,12 @@ make tailscale-up       # Manually authenticate Tailscale
 ```bash
 make push-env    # Push environment variables
 make push-config # Push OpenClaw configuration
-make setup-auth  # Configure Claude subscription auth
+make setup-auth  # Authenticate GitHub CLI inside the OpenClaw container
 make workspace-push SOURCE=./tmp/prompt.txt
 make workspace-push SOURCE=./my-agent DEST=agents/main/agent
 ```
+
+`make setup-auth` reads `GH_TOKEN` from `secrets/openclaw.env` and runs `gh auth login --with-token` inside the `openclaw-gateway` container.
 
 ## Configuration
 
@@ -393,7 +396,8 @@ Then open `http://localhost:18789` in your browser. The gateway will ask for you
 **Access via Tailscale Serve** (if Tailscale is enabled):
 ```bash
 ssh openclaw@<tailscale-ip>
-sudo tailscale serve --bg 18789
+sudo tailscale serve --https 443 --bg 18789
+sudo tailscale funnel --https 8443 --bg 8080
 sudo tailscale serve status  # prints your HTTPS URL
 ```
 
@@ -466,7 +470,7 @@ Emergency access: [Hetzner web console](https://console.hetzner.cloud/) → serv
 
 ### Permission Denied on ~/.openclaw
 
-If you see `Permission denied` when creating directories under `~/.openclaw` (e.g. during `make setup-auth`), Docker likely took ownership of the directory via the volume mount. This can happen if you ran `make deploy` before bootstrap finished, or if you're re-running bootstrap after a previous deploy.
+If you see `Permission denied` while `make setup-auth` is trying to access files under `~/.openclaw`, Docker likely took ownership of the directory via the volume mount. This can happen if you ran `make deploy` before bootstrap finished, or if you're re-running bootstrap after a previous deploy.
 
 **Fix:**
 ```bash
@@ -479,9 +483,9 @@ Then re-run `make bootstrap` or `make setup-auth`.
 
 **Verify prerequisites:**
 ```bash
-# Check CONFIG_DIR is set and exists
-echo $CONFIG_DIR
-ls $CONFIG_DIR/docker/docker-compose.yml
+# Check OPENCLAW_CONFIG_DIR is set and exists
+echo $OPENCLAW_CONFIG_DIR
+ls $OPENCLAW_CONFIG_DIR/docker/docker-compose.yml
 
 # Verify GHCR credentials
 docker login ghcr.io -u YOUR_GITHUB_USERNAME
@@ -501,6 +505,28 @@ ssh-keygen -R <old_vps_ip>
 # Then retry — SSH will prompt you to accept the new key.
 ```
 
+### GitHub CLI Auth Fails
+
+`make setup-auth` expects a GitHub personal access token in `secrets/openclaw.env`:
+
+```bash
+GH_TOKEN=github_pat_...
+```
+
+If authentication still fails:
+
+```bash
+# Check the token is present locally
+grep GH_TOKEN secrets/openclaw.env
+
+# Check gh auth inside the container
+make ssh
+cd ~/openclaw
+docker compose exec openclaw-gateway gh auth status
+```
+
+If `gh auth status` reports no login, re-run `make setup-auth` and verify the token still has the GitHub scopes you need.
+
 ### API Billing Error
 
 **Anthropic API key issues:**
@@ -514,15 +540,7 @@ grep ANTHROPIC_API_KEY ~/openclaw/.env
 # Verify key has credits at console.anthropic.com
 ```
 
-If using Claude subscription:
-```bash
-# Re-run setup-auth
-make setup-auth
-
-# Verify auth profile exists
-make ssh
-cat ~/.openclaw/agents/main/agent/auth-profiles.json
-```
+If using Claude subscription auth, follow the upstream OpenClaw subscription-auth flow in your OpenClaw configuration repo. `make setup-auth` in this repository now handles GitHub CLI authentication for the container, not Claude auth profile setup.
 
 ## Security Considerations
 
@@ -584,7 +602,7 @@ See [SECURITY.md](SECURITY.md) for the full security policy and threat model.
 ├── scripts/                  # Utility scripts
 │   ├── push-env.sh           # Push secrets to VPS
 │   ├── push-config.sh        # Push config to VPS
-│   └── setup-auth.sh         # Setup subscription auth
+│   └── setup-auth.sh         # Authenticate GitHub CLI in the container
 ├── config/
 │   └── inputs.example.sh     # Configuration template
 └── secrets/

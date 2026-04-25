@@ -98,10 +98,10 @@ fi
 
 echo "[OK] All required variables are set"
 
-# Warn if no API key (setup-token may be used instead)
+# Warn if no API key is configured for the selected provider
 api_key_value=$(grep -E "^${AI_PROVIDER_API_KEY_VAR}=" "$ENV_FILE" | head -1 | cut -d= -f2-)
 if [[ -z "$api_key_value" ]]; then
-    echo "[WARN] ${AI_PROVIDER_API_KEY_VAR} is empty. Make sure you've run 'make setup-auth' for subscription auth."
+    echo "[WARN] ${AI_PROVIDER_API_KEY_VAR} is empty. Configure provider auth in $ENV_FILE before deploying."
 fi
 
 # -----------------------------------------------------------------------------

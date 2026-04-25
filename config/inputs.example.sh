@@ -62,7 +62,10 @@ export TF_VAR_ssh_key_fingerprint="CHANGE_ME_your-ssh-key-fingerprint"
 # REQUIRED: Config Directory
 # ============================================
 # Local path to your openclaw-config repository (used by bootstrap, push-config)
-export CONFIG_DIR="/path/to/your/openclaw-config"
+export OPENCLAW_CONFIG_DIR="/path/to/your/openclaw-config"
+
+# Optional: Local path to your regulator data directory (used by bootstrap, push-config)
+export REGULATOR_CONFIG_DIR="/path/to/your/regulator_config"
 
 # ============================================
 # REQUIRED: GitHub Container Registry
@@ -73,12 +76,10 @@ export GHCR_USERNAME="CHANGE_ME_your-github-username"
 export GHCR_TOKEN="CHANGE_ME_your-github-pat-with-read-write-packages-scope"
 
 # ============================================
-# OPTIONAL: Claude Setup Token (for Claude Max/Pro subscription)
+# OPTIONAL: GitHub CLI Authentication
 # ============================================
-# Use your Claude subscription instead of paying for API credits.
-# Generate with: claude setup-token
-# Then run: make setup-auth
-export CLAUDE_SETUP_TOKEN=""
+# Configure GitHub CLI auth for the OpenClaw container in secrets/openclaw.env
+# by setting GH_TOKEN there, then run: make setup-auth
 
 # ============================================
 # OPTIONAL: Tailscale VPN

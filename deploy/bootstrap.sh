@@ -19,7 +19,7 @@ set -euo pipefail
 # -----------------------------------------------------------------------------
 
 # Local path to the openclaw-config repository
-CONFIG_DIR="${CONFIG_DIR:-}"
+OPENCLAW_CONFIG_DIR="${OPENCLAW_CONFIG_DIR:-}"
 
 # GitHub Container Registry credentials (for pulling private images)
 GHCR_USERNAME="${GHCR_USERNAME:-}"
@@ -35,21 +35,21 @@ SSH_OPTS="-o StrictHostKeyChecking=accept-new"
 TERRAFORM_DIR="infra/terraform/envs/prod"
 
 # -----------------------------------------------------------------------------
-# Validate CONFIG_DIR
+# Validate OPENCLAW_CONFIG_DIR
 # -----------------------------------------------------------------------------
 
-if [[ -z "$CONFIG_DIR" ]]; then
-    echo "Error: CONFIG_DIR not set"
+if [[ -z "$OPENCLAW_CONFIG_DIR" ]]; then
+    echo "Error: OPENCLAW_CONFIG_DIR not set"
     echo ""
     echo "Set it in config/inputs.sh or export it:"
-    echo "  export CONFIG_DIR=/path/to/your/openclaw-config"
+    echo "  export OPENCLAW_CONFIG_DIR=/path/to/your/openclaw-config"
     exit 1
 fi
 
-if [[ ! -f "$CONFIG_DIR/docker/docker-compose.yml" ]]; then
-    echo "Error: docker-compose.yml not found at $CONFIG_DIR/docker/docker-compose.yml"
+if [[ ! -f "$OPENCLAW_CONFIG_DIR/docker/docker-compose.yml" ]]; then
+    echo "Error: docker-compose.yml not found at $OPENCLAW_CONFIG_DIR/docker/docker-compose.yml"
     echo ""
-    echo "Make sure CONFIG_DIR points to your openclaw-config repository"
+    echo "Make sure OPENCLAW_CONFIG_DIR points to your openclaw-config repository"
     exit 1
 fi
 
@@ -76,7 +76,7 @@ fi
 
 echo "=== OpenClaw Bootstrap ==="
 echo "VPS IP: $VPS_IP"
-echo "Config Dir: $CONFIG_DIR"
+echo "OpenClaw Config Dir: $OPENCLAW_CONFIG_DIR"
 echo ""
 
 # -----------------------------------------------------------------------------
@@ -133,6 +133,8 @@ set -euo pipefail
 mkdir -p "$HOME/openclaw"
 mkdir -p "$HOME/.openclaw"
 mkdir -p "$HOME/.openclaw/workspace"
+mkdir -p "$HOME/.openclaw/agents/main/agent"
+mkdir -p "$HOME/.regulator"
 mkdir -p "$HOME/backups"
 mkdir -p "$HOME/scripts"
 
@@ -140,7 +142,7 @@ mkdir -p "$HOME/scripts"
 chmod 700 "$HOME/.openclaw"
 chmod 700 "$HOME/.openclaw/workspace"
 
-echo "[OK] Created ~/openclaw, ~/.openclaw, ~/backups, ~/scripts"
+echo "[OK] Created ~/openclaw, ~/.openclaw, ~/.regulator, ~/backups, ~/scripts"
 echo "[OK] Set secure permissions (700) on ~/.openclaw"
 REMOTE_SCRIPT
 
@@ -150,7 +152,7 @@ REMOTE_SCRIPT
 
 echo ""
 echo "Copying docker-compose.yml to VPS..."
-scp $SSH_OPTS "$CONFIG_DIR/docker/docker-compose.yml" "$VPS_USER@$VPS_IP:~/openclaw/docker-compose.yml"
+scp $SSH_OPTS "$OPENCLAW_CONFIG_DIR/docker/docker-compose.yml" "$VPS_USER@$VPS_IP:~/openclaw/docker-compose.yml"
 echo "[OK] docker-compose.yml deployed to ~/openclaw/"
 
 # -----------------------------------------------------------------------------
@@ -230,25 +232,13 @@ fi
 # -----------------------------------------------------------------------------
 
 echo ""
-if [[ -d "$CONFIG_DIR/config" ]]; then
+if [[ -d "$OPENCLAW_CONFIG_DIR/config" ]]; then
     echo "Pushing config files to VPS..."
     ./scripts/push-config.sh "$VPS_IP"
 else
-    echo "[SKIP] No config directory found in $CONFIG_DIR"
+    echo "[SKIP] No config directory found in $OPENCLAW_CONFIG_DIR"
 fi
 
-# -----------------------------------------------------------------------------
-# Set up Claude subscription auth (optional)
-# -----------------------------------------------------------------------------
-
-echo ""
-if [[ -n "${CLAUDE_SETUP_TOKEN:-}" ]]; then
-    echo "Setting up Claude subscription auth..."
-    ./scripts/setup-auth.sh "$VPS_IP"
-else
-    echo "[SKIP] CLAUDE_SETUP_TOKEN not set"
-    echo "       To use your Claude subscription: run 'make setup-auth'"
-fi
 
 # -----------------------------------------------------------------------------
 # Final summary

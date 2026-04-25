@@ -84,7 +84,7 @@ This project deploys cloud infrastructure. Please be aware of:
 8. **API Keys**
    - Claude/Anthropic API keys grant access to your account
    - Monitor usage and set spending limits
-   - Use setup-token (subscription) instead of API keys when possible
+   - Prefer provider auth flows that avoid long-lived API keys when possible
    - Telegram bot tokens should be kept secret
 
 ### Tailscale Security
