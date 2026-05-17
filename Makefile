@@ -5,9 +5,9 @@
 
 SHELL := /bin/bash
 .PHONY: init plan apply destroy ssh ssh-root tunnel output ip fmt validate clean help \
-	bootstrap deploy push-env push-config setup-auth backup-now sync-backups restore logs status \
+	bootstrap deploy push-env push-config pull-config setup-auth backup-now sync-backups restore logs status \
         tailscale-status tailscale-ip tailscale-up tailscale-serve \
-        workspace-sync workspace-push
+		workspace-sync workspace-push workspace-pull
 
 # Default target
 .DEFAULT_GOAL := help
@@ -109,6 +109,10 @@ push-config: ## Push config files from OPENCLAW_CONFIG_DIR and REGULATOR_CONFIG_
 	@echo -e "$(BLUE)[DEPLOY]$(NC) Pushing config to VPS..."
 	@./scripts/push-config.sh $(SERVER_IP)
 
+pull-config: ## Pull openclaw.json and config.yaml from the VPS
+	@echo -e "$(BLUE)[DEPLOY]$(NC) Pulling config from VPS..."
+	@./scripts/pull-config.sh $(SERVER_IP)
+
 push-workspace: ## Push one file or directory to ~/.openclaw/workspace (use SOURCE=path [DEST=path])
 ifndef SOURCE
 	@echo -e "$(RED)[ERROR]$(NC) SOURCE variable required"
@@ -173,6 +177,18 @@ endif
 		--dest "$(DEST)" \
 		--host "$(SERVER_IP)"
 
+workspace-pull: ## Pull one file or directory from ~/.openclaw/workspace (use SOURCE=path [DEST=path])
+ifndef SOURCE
+	@echo -e "$(RED)[ERROR]$(NC) SOURCE variable required"
+	@echo "Usage: make workspace-pull SOURCE=relative/path [DEST=local/path] [ENV=prod]"
+	@exit 1
+endif
+	@echo -e "$(BLUE)[DEPLOY]$(NC) Pulling $(SOURCE) from workspace on $(SERVER_IP)..."
+	@./scripts/pull-workspace.sh \
+		--source "$(SOURCE)" \
+		--dest "$(DEST)" \
+		--host "$(SERVER_IP)"
+
 # =============================================================================
 # Tailscale Commands
 # =============================================================================
@@ -214,6 +230,7 @@ help: ## Show this help message
 	@echo -e "  $(BLUE)deploy$(NC)          Pull latest image and restart container"
 	@echo -e "  $(BLUE)push-env$(NC)        Push secrets/openclaw.env to the VPS"
 	@echo -e "  $(BLUE)push-config$(NC)     Push config files to the VPS"
+	@echo -e "  $(BLUE)pull-config$(NC)     Pull openclaw.json and config.yaml from the VPS"
 	@echo -e "  $(BLUE)setup-auth$(NC)      Authenticate GitHub CLI inside the container"
 	@echo ""
 	@echo -e "$(BOLD)Operations:$(NC)"
@@ -227,6 +244,7 @@ help: ## Show this help message
 	@echo -e "  $(GREEN)restore$(NC)         Restore from backup (BACKUP=filename)"
 	@echo -e "  $(GREEN)workspace-sync$(NC)  Sync workspace to GitHub now"
 	@echo -e "  $(GREEN)workspace-push$(NC)  Push SOURCE into ~/.openclaw/workspace"
+	@echo -e "  $(GREEN)workspace-pull$(NC)  Pull SOURCE from ~/.openclaw/workspace"
 	@echo -e "  $(GREEN)output$(NC)          Show Terraform outputs"
 	@echo -e "  $(GREEN)ip$(NC)              Show server IP"
 	@echo ""

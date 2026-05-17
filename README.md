@@ -159,9 +159,11 @@ make tailscale-up       # Manually authenticate Tailscale
 ```bash
 make push-env    # Push environment variables
 make push-config # Push OpenClaw configuration
+make pull-config # Pull openclaw.json and config.yaml
 make setup-auth  # Authenticate GitHub CLI inside the OpenClaw container
 make workspace-push SOURCE=./tmp/prompt.txt
 make workspace-push SOURCE=./my-agent DEST=agents/main/agent
+make workspace-pull SOURCE=agents/main/agent DEST=./tmp/agent
 ```
 
 `make setup-auth` reads `GH_TOKEN` from `secrets/openclaw.env` and runs `gh auth login --with-token` inside the `openclaw-gateway` container.
